@@ -16,6 +16,40 @@ class Portal extends CI_Controller {
 		//var_dump($ret);
 	}
 	
+	public function GetUserGuest()
+	{
+		$user = $this->input->post('username');
+		$pass = $this->input->post('password');
+		if(User::ValidUser($user,$pass,false) == 1)
+		{
+			$user = User::GetUserByName($user);
+			if(!empty($user->instant_id))
+			{
+		        $ret = array();
+				$conn = libvirt_connect('qemu:///system', false);
+                $res = libvirt_domain_lookup_by_uuid_string($conn, $user->instant_id);
+                if($res)
+                {
+                     $port = libvirt_domain_xml_xpath($res, '/domain/devices/graphics[@type="spice"]/@port');
+                     $ret["port"] = $port[0];
+		     //user libxml to parse password out
+		     $xml = simplexml_load_file("/var/lib/nova/instances/".$user->instant_id."/libvirt.xml");
+		     $ret["pass"] = strval($xml->devices->graphics[1]["password"]);
+                     //$pass = libvirt_domain_xml_xpath($res, '/domain/devices/graphics/@pass');
+		     echo json_encode($ret);
+		     return;
+                }else{
+                     echo json_encode(array("ret"=>1, "msg"=>"Guest is not started"));
+		     return;
+                }
+			}else{
+				echo json_encode(array("ret"=>1, "msg"=>"No guest alloc"));
+				return;
+			}
+		}
+		echo json_encode(array("ret"=>1,"msg"=>"Incorrect Password"));
+		
+	}
 	public function index()
 	{
 		$this->login();
