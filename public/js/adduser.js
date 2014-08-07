@@ -1,4 +1,5 @@
 $(document).ready(function(){
+	var instant_id = null;
 	$('#adduser_form').validate({
 		// 设置验证规则
 		rules :{
@@ -31,6 +32,9 @@ $(document).ready(function(){
 				required : true
 			},
 			selVirtualMachine : {
+				required :true
+			},
+			selAppointMachine : {
 				required :true
 			}
 		},
@@ -66,6 +70,9 @@ $(document).ready(function(){
 			},
 			selVirtualMachine :{
 				required : '请选择虚拟机类型'
+			},
+			selAppointMachine :{
+				required : '请选择指定虚拟机方式'
 			}
 		},
 		errorClass:'alert-danger'
@@ -81,6 +88,19 @@ $(document).ready(function(){
 		bRet &= $('#txtConfirmPassword').valid();
 		bRet &= $('#selDepartment').valid();
 		bRet &= $('#selVirtualMachine').valid();
+		bRet &= $('#selAppointMachine').valid();
 		return bRet;
+	});
+	$('#selVirtualMachine').change(function(){
+		image_id = $(this).val();
+		$.post('/account/getinstantlist/', {image_id: image_id}, function(data){
+			eval('var ret=' + data);
+			$('#selAppointMachine').empty();
+			$('#selAppointMachine').append('<option value="auto_distribute" select="selected">' + "自动分配新实例"+ '</option>');
+			for(i=0; i<ret.num; i++)
+			{
+				$('#selAppointMachine').append('<option value='+ret.list['i']+'>' + ret.list[i]+ '</option>');
+			}
+		});
 	});
 });

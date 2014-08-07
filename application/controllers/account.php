@@ -26,6 +26,11 @@ class Account extends CI_Controller {
 	{
 		$data = array();
 		$data['actTab'] = 'usermanage';
+		$client = new NovaClient();
+		$ret = $client->Login("admin","3f368f49fb504702");
+		$imageList = $client->GetImageList();
+		if ($imageList != null)
+			$data['imageList'] = $imageList;
 		$user_name = null;
 		$full_name = null;
 		$department = null;
@@ -76,47 +81,85 @@ class Account extends CI_Controller {
 		$id = $this->input->get('user_id');
 		$data['actTab'] = 'usermanage';
 		$data['departmentList'] = $this->mp_cloud->Get_DepartmentList();
+		$client = new NovaClient();
+		$ret = $client->Login("admin","3f368f49fb504702");
+		$imageList = $client->GetImageList();
+		$instantList = $client->GetInstantList();
+		$userList = $this->mp_cloud->Get_UserList();
+		if($id)
+		{
+			$data['userObj'] = $user = User::GetUserById($id);
+			$username = $data['userObj']->username;
+			$num = count($instantList->servers);
+			for($i=0; $i < $num; $i++)
+			{
+				if($user->machine_id != $instantList->servers[$i]->image->id)
+				{
+					unset($instantList->servers[$i]);
+				}
+			}
+		}
 		if($_SERVER['REQUEST_METHOD'] == 'POST')
 		{
 			$this->load->library('form_validation');
 			$id = $this->input->post('txtId');
+			
+			$this->form_validation->set_rules('txtUserFullName',"用户全名",'trim|required');
+			$this->form_validation->set_rules('selVirtualMachine',"虚拟机系统",'trim|required');
+			$this->form_validation->set_rules('selDepartment',"部门",'trim|required');
+			$this->form_validation->set_rules('selAppointMachine',"指定虚拟机",'trim|required');
 			if(!$id){
 				$this->form_validation->set_rules('txtUsername',"用户登陆名",'trim|required');
 				$this->form_validation->set_rules('txtPassword',"密码",'trim|required');
 				$this->form_validation->set_rules('txtConfirmPassword',"确认密码",'trim|required');
-				$this->form_validation->set_rules('txtUserFullName',"用户全名",'trim|required');
-				$this->form_validation->set_rules('selDepartment',"部门",'trim|required');
-				$this->form_validation->set_rules('selVirtualMachine',"虚拟机状态",'trim|required');
-			}else
-			{
-				$this->form_validation->set_rules('txtUserFullName',"用户全名",'trim|required');
-				$this->form_validation->set_rules('selVirtualMachine',"虚拟机状态",'trim|required');
-				$this->form_validation->set_rules('selDepartment',"部门",'trim|required');
 			}
 			if ($this->form_validation->run() == TRUE)
 			{
 				if(!$id)
-				{
 					$username = $this->input->post('txtUsername');
-					$password = $this->input->post('txtPassword');
-					$fullname = $this->input->post('txtUserFullName');
-					$virtualmachine = $this->input->post('selVirtualMachine');
-					$department = $this->input->post('selDepartment');
-				}else {
-					$password = $this->input->post('txtPassword_edit');
-					$fullname = $this->input->post('txtUserFullName');
-					$virtualmachine = $this->input->post('selVirtualMachine');
-					$department = $this->input->post('selDepartment');
+				$password = $this->input->post('txtPassword');
+				$fullname = $this->input->post('txtUserFullName');
+				$machine_id = $this->input->post('selVirtualMachine');
+				$department = $this->input->post('selDepartment');
+				$instant_id = $this->input->post('selAppointMachine');
+				if ($imageList != null)
+					foreach ($imageList->images as $imageObj)
+						if($machine_id == $imageObj->id)
+							$virtualmachine = $imageObj->name;
+				if ($instantList != null)
+					foreach ($instantList->servers as $serverObj)
+						if($instant_id == $serverObj->id)
+							$instant_name = $serverObj->name;
+				$instant_name = $virtualmachine."-".$username;
+				if($instant_id == 'auto_distribute')
+				{
+					error_log("virtualmachine:");
+					error_log($virtualmachine);
+					$client = new NovaClient();
+					$ret = $client->Login("admin","3f368f49fb504702");
+					$newInstantObj = $client->CreatInstant($machine_id,$instant_name);
+					if($newInstantObj != null)
+					{
+						$instant_id = $newInstantObj->server->id;
+					}
+				}else
+				{
+					$client = new NovaClient();
+					$ret = $client->Login("admin","3f368f49fb504702");
+					$upDateInstant = $client->UpDateInstant($instant_id, $instant_name);
+					foreach($userList as $userObj)
+						if($userObj->instant_id == $instant_id)
+							user::UpdateUserinfo($userObj->id,$userObj->full_name,$userObj->virtual_machine,$userObj->department,'',$userObj->machine_id,'','');
 				}
 				if($id){
-					if(User::UpdateUserinfo($id,$fullname,$virtualmachine,$department,$password))
+					if(User::UpdateUserinfo($id,$fullname,$virtualmachine,$department,$password,$machine_id,$instant_id,$instant_name))
 					{
 						redirect('/account/usermanage');
 					}else{
 						$data['error_msg'] = '修改用户失败，请重试';
 					}
 				}else{
-					if(User::CreateUser($username,$password,$fullname,$virtualmachine,$department)){
+					if(User::CreateUser($username,$password,$fullname,$virtualmachine,$department,$machine_id,$instant_id,$instant_name)){
 						redirect('/account/usermanage');
 					}else{
 						$data['error_msg'] = '创建用户失败，请重试';
@@ -124,13 +167,37 @@ class Account extends CI_Controller {
 				}
 			}
 		}
-		if($id){
-			$data['userObj'] = User::GetUserById($id);
-		}
+		if($imageList != null)
+			$data['imageList'] = $imageList;
+		if($instantList != null)
+			$data['instantList'] = $instantList;
 		$content = $this->load->view('account/adduser', $data, TRUE);
 		$scriptExtra = '<script type="text/javascript" src="/public/js/jquery.validate.min.js"></script>';
 		$scriptExtra .= '<script type="text/javascript" src="/public/js/adduser.js"></script>';
 		$this->mp_master->Show($content, $scriptExtra , "添加用户" , $data);
+	}
+	function getinstantlist()
+	{
+		$jsonRet = array();
+		$list = array();
+		$image_id = $this->input->post('image_id');
+		$client = new NovaClient();
+		$ret = $client->Login("admin","3f368f49fb504702");
+		$instantList = $client->GetInstantList();
+		$j = 0;
+		foreach($instantList->servers as $instantObj)
+		{
+			if($image_id == $instantObj->image->id)
+			{
+				$list[$j] = $instantObj->name;
+				$list['$j'] = $instantObj->id;
+				$j++;
+			}
+		}
+		$jsonRet['num'] = $j;
+		$jsonRet['list'] = $list;
+		echo json_encode($jsonRet);
+		return; 
 	}
 
 	function checkaccount()

@@ -8,6 +8,14 @@ class Portal extends CI_Controller {
 		$this->load->model('mp_master');
 	}
 
+	public function test()
+	{
+		$client = new NovaClient();
+		$ret = $client->Login("admin","3f368f49fb504702");
+		$client->StopInstant("c727dfa9-0a6c-41c0-a756-1bb5ee65c07d");
+		//var_dump($ret);
+	}
+	
 	public function index()
 	{
 		$this->login();

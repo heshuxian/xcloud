@@ -2,19 +2,19 @@
 <section class="content-header">
 	<h1>
 		主页
-		<small>添加用户</small>
+		<small><?php if(isset($userObj)){?>编辑<?php } else{?>添加<?php }?>用户</small>
 	</h1>
 	<ol class="breadcrumb">
 		<li><a href="/"><i class="fa fa-dashboard"></i> 主页</a></li>
 		<li><a href="/account/usermanage"><i class="fa fa-dashboard"></i> 用户列表</a></li>
-		<li class="active"><?php if(isset($userObj)){?>添加<?php } else{?>编辑<?php }?>用户</li>
+		<li class="active"><?php if(isset($userObj)){?>编辑<?php } else{?>添加<?php }?>用户</li>
 	</ol>
 </section>
 <!-- Main content -->
 <section class="content">
 	<div class="col-md-6 box box-info">
 		 <div class="box-header">
-			<h3 class="box-title"><?php if(isset($userObj)){?>添加<?php } else{?>编辑<?php }?>用户</h3>
+			<h3 class="box-title"><?php if(isset($userObj)){?>编辑<?php } else{?>添加<?php }?>用户</h3>
 		</div>
 		<div class='col-md-4'>
 		<?php if(isset($error_msg)){?>
@@ -57,14 +57,21 @@
 					</select>
 				</div>
 				<div class="form-group">
-					<label>虚拟机状态:</label>
+					<label>虚拟机系统:</label>
 					<select id='selVirtualMachine' class='form-control' name='selVirtualMachine'>
-						<?php if(!isset($userObj)){?>
 						<option value='' selected='selected' >请选择</option>
-						<?php }?>
-						<option value='a' <?php if(isset($userObj)){ if($userObj->virtual_machine=='a'){?> selected='selected' <?php }}?>>a</option>
-						<option value='b' <?php if(isset($userObj)){ if($userObj->virtual_machine=='b'){?> selected='selected' <?php }}?>>b</option>
-						<option value='c' <?php if(isset($userObj)){ if($userObj->virtual_machine=='c'){?> selected='selected' <?php }}?>>c</option>
+						<?php if(isset($imageList)){ for($i=0; $i<count($imageList->images); $i++){?>
+						<option value='<?php echo $imageList->images[$i]->id?>' <?php if(isset($userObj)){ if($userObj->machine_id==$imageList->images[$i]->id){?> selected='selected' <?php }}?>><?php echo $imageList->images[$i]->name?></option>
+						<?php }}?>
+					</select>
+				</div>
+				<div class="form-group">
+					<label>指定虚拟机:</label>
+					<select id='selAppointMachine' class='form-control' name='selAppointMachine'>
+						<option selected='selected' value='auto_distribute'>自动分配新实例</option>
+						<?php if(isset($instantList)){ foreach($instantList->servers as $instantObj){?>
+						<option value='<?php echo $instantObj->id;?>' <?php if(isset($userObj)){ if($userObj->instant_id==$instantObj->id){?> selected='selected' <?php }}?>><?php echo $instantObj->name;?></option>
+						<?php }}?>
 					</select>
 				</div>
 			</div>

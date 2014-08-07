@@ -45,12 +45,12 @@
 				</div>
 				<div class="col-lg-4">
 					<div class="form-group">
-						<label>虚拟机状态</label>
+						<label>虚拟机系统</label>
 						<select id='selVirtualMachine' class='form-control' name='selVirtualMachine'>
 							<option value='' selected='selected' >请选择</option>
-							<option value='a' >a</option>
-							<option value='b' >b</option>
-							<option value='c' >c</option>
+							<?php if(isset($imageList)){ for($i=0; $i<count($imageList->images); $i++){?>
+							<option value='<?php echo $imageList->images[$i]->id?>' <?php if(isset($userObj)){ if($userObj->machine_id==$imageList->images[$i]->id){?> selected='selected' <?php }}?>><?php echo $imageList->images[$i]->name?></option>
+							<?php }}?>
 						</select>
 					</div>
 	<!-- 			</div> -->
@@ -70,11 +70,12 @@
 			<table class="table table-bordered">
 				<tbody><tr>
 					<th style="width: 5%">No.</th>
-						<th>账号</th>
-						<th>用户全名</th>
-						<th>部门</th>
-						<th>虚拟机状态</th>
-						<th style="width: 10%">操作</th>
+					<th>账号</th>
+					<th>用户全名</th>
+					<th>部门</th>
+					<th>虚拟机系统</th>
+					<th>虚拟机实例</th>
+					<th style="width: 10%">操作</th>
 				</tr>
 				<?php $i = 1 ;foreach ($userList as $userObj):?>
 				<tr>
@@ -83,6 +84,7 @@
 					<td><?php echo $userObj->full_name;?></td>
 					<td><?php echo $userObj->department;?></td>
 					<td><?php echo $userObj->virtual_machine;?></td>
+					<td><?php echo $userObj->appoint_machine;?></td>
 					<td class="center actions">
 						<div class="btn-group" user_id=<?php echo $userObj->id;?>>
 							<a href="/account/adduser?user_id=<?php echo $userObj->id;?>" title='修改' class="btn btn-small btn-primary">
