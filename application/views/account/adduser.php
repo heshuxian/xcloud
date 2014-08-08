@@ -69,8 +69,8 @@
 					<label>指定虚拟机:</label>
 					<select id='selAppointMachine' class='form-control' name='selAppointMachine'>
 						<option selected='selected' value='auto_distribute'>自动分配新实例</option>
-						<?php if(isset($instantList)){ foreach($instantList->servers as $instantObj){?>
-						<option value='<?php echo $instantObj->id;?>' <?php if(isset($userObj)){ if($userObj->instant_id==$instantObj->id){?> selected='selected' <?php }}?>><?php echo $instantObj->name;?></option>
+						<?php if(isset($instanceList)){ foreach($instanceList->servers as $instanceObj){?>
+						<option value='<?php echo $instanceObj->id?>' <?php if(isset($userObj)){ if($userObj->instance_id==$instanceObj->id){?> selected='selected' <?php }}?>><?php echo $instanceObj->name;?></option>
 						<?php }}?>
 					</select>
 				</div>

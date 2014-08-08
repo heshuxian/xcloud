@@ -84,7 +84,7 @@
 					<td><?php echo $userObj->full_name;?></td>
 					<td><?php echo $userObj->department;?></td>
 					<td><?php echo $userObj->virtual_machine;?></td>
-					<td><?php echo $userObj->appoint_machine;?></td>
+					<td><?php echo $userObj->instance_name;?></td>
 					<td class="center actions">
 						<div class="btn-group" user_id=<?php echo $userObj->id;?>>
 							<a href="/account/adduser?user_id=<?php echo $userObj->id;?>" title='修改' class="btn btn-small btn-primary">

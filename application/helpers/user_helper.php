@@ -30,7 +30,7 @@ class User{
 		return false;
 	}
 
-	function CreateUser($username,$password,$full_name,$virtual_machine,$department,$machine_id,$instant_id,$instant_name)
+	function CreateUser($username,$password,$full_name,$virtual_machine,$department,$machine_id,$instance_id,$instance_name)
 	{
 		$dbObj = $this->load->database('default', TRUE);
 		$dbObj->set("username", $username);
@@ -39,8 +39,8 @@ class User{
 		$dbObj->set("department", $department);
 		$dbObj->set('virtual_machine', $virtual_machine);
 		$dbObj->set('machine_id', $machine_id);
-		$dbObj->set('instant_id', $instant_id);
-		$dbObj->set('appoint_machine', $instant_name);
+		$dbObj->set('instance_id', $instance_id);
+		$dbObj->set('instance_name', $instance_name);
 		return $dbObj->insert('user');
 	}
 
@@ -51,7 +51,7 @@ class User{
 // 		$dbObj->set('phone', $phone);
 // 		$dbObj->update('user');
 // 	}
-	function UpdateUserinfo($id,$full_name,$virtual_machine,$department,$password,$machine_id,$instant_id,$instant_name)
+	function UpdateUserinfo($id,$full_name,$virtual_machine,$department,$password,$machine_id,$instance_id,$instance_name)
 	{
 		$dbObj = $this->load->database('default',TRUE);
 		$dbObj->where('id', $id);
@@ -59,8 +59,8 @@ class User{
 		$dbObj->set('virtual_machine', $virtual_machine);
 		$dbObj->set('department', $department);
 		$dbObj->set('machine_id', $machine_id);
-		$dbObj->set('instant_id', $instant_id);
-		$dbObj->set('appoint_machine', $instant_name);
+		$dbObj->set('instance_id', $instance_id);
+		$dbObj->set('instance_name', $instance_name);
 		if($password != '')
 		{
  			$dbObj->set('password', md5($password));

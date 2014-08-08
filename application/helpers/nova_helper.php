@@ -46,7 +46,7 @@ class NovaClient{
     	catch (HTTP_Request2_Exception $e) {
     	}
     }
-    public function GetInstantList()
+    public function GetInstanceList()
     {
     	$request = new Http_Request2($this->baseUrl.":8774/v2/c316ab8c05214fff84e0b8b7e18c8d00/servers/detail", HTTP_Request2::METHOD_GET);
     	$request->setHeader("X-Auth-Token",$this->token);
@@ -64,13 +64,35 @@ class NovaClient{
     	catch (HTTP_Request2_Exception $e) {
     	}
     }
-    public function CreatInstant($machine_id,$instant_name)
+    public function GetInstance($instance_id)
+    {
+    	$request = new Http_Request2($this->baseUrl.":8774/v2/c316ab8c05214fff84e0b8b7e18c8d00/servers/".$instance_id, HTTP_Request2::METHOD_GET);
+    	$request->setHeader("X-Auth-Token",$this->token);
+    	$request->setHeader("Accept","application/json");
+    	$response = $request->send();
+    	$jsonData = $response->getBody();
+    	$qData = json_decode($jsonData);
+    	var_dump($response->getStatus());
+    	var_dump($qData);
+    	try{
+    		if(200 == $response->getStatus())
+    		{
+    			$jsonData = $response->getBody();
+    			$qData = json_decode($jsonData);
+    			return $qData;
+    		}else
+    			return null;
+    	}
+    	catch (HTTP_Request2_Exception $e) {
+    	}
+    }
+    public function CreatInstance($machine_id,$instance_name)
     {
     	$request = new Http_Request2($this->baseUrl.":8774/v2/c316ab8c05214fff84e0b8b7e18c8d00/servers", HTTP_Request2::METHOD_POST);
     	$request->setHeader("X-Auth-Token",$this->token);
     	$request->setHeader("Content-Type","application/json");
     	$request->setHeader("Accept","application/json");
-    	$server = array("server"=>array ("name"=>$instant_name,"imageRef"=>$machine_id,
+    	$server = array("server"=>array ("name"=>$instance_name,"imageRef"=>$machine_id,
     			"flavorRef"=>"ef53c15b-104c-4e40-9e5c-ba2cd15556a0","max_count"=>1,"min_count"=>1,
     			"networks"=>array(array("uuid"=>"d94ca3ea-3946-4b12-9e4c-8ceeafac60c3")), 
     			"security_groups"=>array(array("name"=>"default"),array("name"=>"default"))));
@@ -88,13 +110,32 @@ class NovaClient{
     	catch (HTTP_Request2_Exception $e) {
     	}
     }
-    public function UpDateInstant($instant_id, $instant_name)
+    public function DeleteInstance($instance_id)
     {
-    	$request = new Http_Request2($this->baseUrl.":8774/v2/c316ab8c05214fff84e0b8b7e18c8d00/servers/".$instant_id, HTTP_Request2::METHOD_PUT);
+    	$request = new Http_Request2($this->baseUrl.":8774/v2/c316ab8c05214fff84e0b8b7e18c8d00/servers/".$instance_id, HTTP_Request2::METHOD_DELETE);
     	$request->setHeader("X-Auth-Token",$this->token);
     	$request->setHeader("Content-Type","application/json");
     	$request->setHeader("Accept","application/json");
-    	$server = array("server"=>array("name"=>$instant_name));
+    	$response = $request->send();
+    	try{
+    		if(204 == $response->getStatus())
+    		{
+    			$jsonData = $response->getBody();
+    			$qData = json_decode($jsonData);
+    			return $qData;
+    		}else
+    			return null;
+    	}
+    	catch (HTTP_Request2_Exception $e) {
+    	}
+    }
+    public function UpDateInstance($instance_id, $instance_name)
+    {
+    	$request = new Http_Request2($this->baseUrl.":8774/v2/c316ab8c05214fff84e0b8b7e18c8d00/servers/".$instance_id, HTTP_Request2::METHOD_PUT);
+    	$request->setHeader("X-Auth-Token",$this->token);
+    	$request->setHeader("Content-Type","application/json");
+    	$request->setHeader("Accept","application/json");
+    	$server = array("server"=>array("name"=>$instance_name));
     	$request->setBody(json_encode($server));
     	$response = $request->send();
     	try{
@@ -109,9 +150,9 @@ class NovaClient{
     	catch (HTTP_Request2_Exception $e) {
     	}
     }
-    public function StartInstant($instant_id)
+    public function StartInstance($instance_id)
     {
-    	$request = new Http_Request2($this->baseUrl.":8774/v2/c316ab8c05214fff84e0b8b7e18c8d00/servers/".$instant_id."/action", HTTP_Request2::METHOD_POST);
+    	$request = new Http_Request2($this->baseUrl.":8774/v2/c316ab8c05214fff84e0b8b7e18c8d00/servers/".$instance_id."/action", HTTP_Request2::METHOD_POST);
     	$request->setHeader("X-Auth-Token",$this->token);
     	$request->setHeader("Content-Type","application/json");
     	$request->setHeader("Accept","application/json");
@@ -130,9 +171,9 @@ class NovaClient{
     	catch (HTTP_Request2_Exception $e) {
     	}
     }
-    public function StopInstant($instant_id)
+    public function StopInstance($instance_id)
     {
-    	$request = new Http_Request2($this->baseUrl.":8774/v2/c316ab8c05214fff84e0b8b7e18c8d00/servers/".$instant_id."/action", HTTP_Request2::METHOD_POST);
+    	$request = new Http_Request2($this->baseUrl.":8774/v2/c316ab8c05214fff84e0b8b7e18c8d00/servers/".$instance_id."/action", HTTP_Request2::METHOD_POST);
     	$request->setHeader("X-Auth-Token",$this->token);
     	$request->setHeader("Content-Type","application/json");
     	$request->setHeader("Accept","application/json");

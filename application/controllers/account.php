@@ -84,26 +84,22 @@ class Account extends CI_Controller {
 		$client = new NovaClient();
 		$ret = $client->Login("admin","3f368f49fb504702");
 		$imageList = $client->GetImageList();
-		$instantList = $client->GetInstantList();
+		$instanceList = $client->GetInstanceList();
 		$userList = $this->mp_cloud->Get_UserList();
 		if($id)
 		{
 			$data['userObj'] = $user = User::GetUserById($id);
 			$username = $data['userObj']->username;
-			$num = count($instantList->servers);
+			$num = count($instanceList->servers);
 			for($i=0; $i < $num; $i++)
-			{
-				if($user->machine_id != $instantList->servers[$i]->image->id)
-				{
-					unset($instantList->servers[$i]);
-				}
-			}
+				if($user->machine_id != $instanceList->servers[$i]->image->id)
+				unset($instanceList->servers[$i]);
 		}
 		if($_SERVER['REQUEST_METHOD'] == 'POST')
 		{
 			$this->load->library('form_validation');
 			$id = $this->input->post('txtId');
-			
+
 			$this->form_validation->set_rules('txtUserFullName',"用户全名",'trim|required');
 			$this->form_validation->set_rules('selVirtualMachine',"虚拟机系统",'trim|required');
 			$this->form_validation->set_rules('selDepartment',"部门",'trim|required');
@@ -121,45 +117,71 @@ class Account extends CI_Controller {
 				$fullname = $this->input->post('txtUserFullName');
 				$machine_id = $this->input->post('selVirtualMachine');
 				$department = $this->input->post('selDepartment');
-				$instant_id = $this->input->post('selAppointMachine');
+				$instance_id = $this->input->post('selAppointMachine');
 				if ($imageList != null)
 					foreach ($imageList->images as $imageObj)
 						if($machine_id == $imageObj->id)
 							$virtualmachine = $imageObj->name;
-				if ($instantList != null)
-					foreach ($instantList->servers as $serverObj)
-						if($instant_id == $serverObj->id)
-							$instant_name = $serverObj->name;
-				$instant_name = $virtualmachine."-".$username;
-				if($instant_id == 'auto_distribute')
+				if ($instanceList != null)
+					foreach ($instanceList->servers as $serverObj)
+						if($instance_id == $serverObj->id)
+							$instance_name = $serverObj->name;
+				$instance_name = $virtualmachine."-".$username;
+				if($id)   //edit userinfo
 				{
-					error_log("virtualmachine:");
-					error_log($virtualmachine);
-					$client = new NovaClient();
-					$ret = $client->Login("admin","3f368f49fb504702");
-					$newInstantObj = $client->CreatInstant($machine_id,$instant_name);
-					if($newInstantObj != null)
+					if($user->instance_id != $instance_id)  //edit instance information
 					{
-						$instant_id = $newInstantObj->server->id;
+						$delete_instance_id = $user->instance_id;
+						if($instance_id == 'auto_distribute')
+						{
+							$client = new NovaClient();
+							$ret = $client->Login("admin","3f368f49fb504702");
+							$newInstanceObj = $client->CreatInstance($machine_id,$instance_name);
+							if($newInstanceObj != null)
+							{
+								$instance_id = $newInstanceObj->server->id;
+							}
+						}else
+						{
+							$client = new NovaClient();
+							$ret = $client->Login("admin","3f368f49fb504702");
+							$upDateInstance = $client->UpDateInstance($instance_id, $instance_name);
+							foreach($userList as $userObj)
+								if($userObj->instance_id == $instance_id)
+									user::UpdateUserinfo($userObj->id,$userObj->full_name,$userObj->virtual_machine,$userObj->department,'',$userObj->machine_id,'','');
+						}
+						$client->DeleteInstance($delete_instance_id);
 					}
-				}else
-				{
-					$client = new NovaClient();
-					$ret = $client->Login("admin","3f368f49fb504702");
-					$upDateInstant = $client->UpDateInstant($instant_id, $instant_name);
-					foreach($userList as $userObj)
-						if($userObj->instant_id == $instant_id)
-							user::UpdateUserinfo($userObj->id,$userObj->full_name,$userObj->virtual_machine,$userObj->department,'',$userObj->machine_id,'','');
-				}
-				if($id){
-					if(User::UpdateUserinfo($id,$fullname,$virtualmachine,$department,$password,$machine_id,$instant_id,$instant_name))
-					{
+					if(User::UpdateUserinfo($id,$fullname,$virtualmachine,$department,$password,$machine_id,$instance_id,$instance_name))
 						redirect('/account/usermanage');
-					}else{
+					else
 						$data['error_msg'] = '修改用户失败，请重试';
+				}else   // creat new user
+				{
+					if($instance_id == 'auto_distribute')
+					{
+						$client = new NovaClient();
+						$ret = $client->Login("admin","3f368f49fb504702");
+						$newInstanceObj = $client->CreatInstance($machine_id,$instance_name);
+						if($newInstanceObj != null)
+						{
+							$instance_id = $newInstanceObj->server->id;
+							$instance_password = $newInstanceObj->server->adminPass;
+						}
+					}else
+					{
+						$client = new NovaClient();
+						$ret = $client->Login("admin","3f368f49fb504702");
+						$upDateInstance = $client->UpDateInstance($instance_id, $instance_name);
+						foreach($userList as $userObj)
+							if($userObj->instance_id == $instance_id)
+							{
+								$instance_password = $userObj->instance_password;
+								//delete instance information from the old user
+								user::UpdateUserinfo($userObj->id,$userObj->full_name,$userObj->virtual_machine,$userObj->department,'',$userObj->machine_id,'','','');
+							}
 					}
-				}else{
-					if(User::CreateUser($username,$password,$fullname,$virtualmachine,$department,$machine_id,$instant_id,$instant_name)){
+					if(User::CreateUser($username,$password,$fullname,$virtualmachine,$department,$machine_id,$instance_id,$instance_name,$instance_password)){
 						redirect('/account/usermanage');
 					}else{
 						$data['error_msg'] = '创建用户失败，请重试';
@@ -169,35 +191,39 @@ class Account extends CI_Controller {
 		}
 		if($imageList != null)
 			$data['imageList'] = $imageList;
-		if($instantList != null)
-			$data['instantList'] = $instantList;
+		if($instanceList != null)
+			$data['instanceList'] = $instanceList;
 		$content = $this->load->view('account/adduser', $data, TRUE);
 		$scriptExtra = '<script type="text/javascript" src="/public/js/jquery.validate.min.js"></script>';
 		$scriptExtra .= '<script type="text/javascript" src="/public/js/adduser.js"></script>';
 		$this->mp_master->Show($content, $scriptExtra , "添加用户" , $data);
 	}
-	function getinstantlist()
+	function getinstancelist()
 	{
 		$jsonRet = array();
 		$list = array();
-		$image_id = $this->input->post('image_id');
+		$image_id = $this->input->get('image_id');
 		$client = new NovaClient();
 		$ret = $client->Login("admin","3f368f49fb504702");
-		$instantList = $client->GetInstantList();
-		$j = 0;
-		foreach($instantList->servers as $instantObj)
+		$instanceList = $client->GetInstanceList();
+		foreach($instanceList->servers as $instanceObj)
 		{
-			if($image_id == $instantObj->image->id)
+			$obj = new stdClass();
+			if($image_id == $instanceObj->image->id)
 			{
-				$list[$j] = $instantObj->name;
-				$list['$j'] = $instantObj->id;
-				$j++;
+				$obj->name = $instanceObj->name;
+				$obj->value = $instanceObj->id;
+				array_push($list, $obj);
 			}
 		}
-		$jsonRet['num'] = $j;
-		$jsonRet['list'] = $list;
+		if(count($list) > 0){
+			$jsonRet['ret'] = 0;
+			$jsonRet['list'] = $list;
+		}else{
+			$jsonRet['ret'] = 1;
+		}
 		echo json_encode($jsonRet);
-		return; 
+		return;
 	}
 
 	function checkaccount()

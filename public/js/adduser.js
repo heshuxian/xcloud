@@ -92,15 +92,20 @@ $(document).ready(function(){
 		return bRet;
 	});
 	$('#selVirtualMachine').change(function(){
-		image_id = $(this).val();
-		$.post('/account/getinstantlist/', {image_id: image_id}, function(data){
+		$.get('/account/getinstancelist/', {image_id:  $(this).val()}, function(data){
 			eval('var ret=' + data);
-			$('#selAppointMachine').empty();
-			$('#selAppointMachine').append('<option value="auto_distribute" select="selected">' + "自动分配新实例"+ '</option>');
-			for(i=0; i<ret.num; i++)
-			{
-				$('#selAppointMachine').append('<option value='+ret.list['i']+'>' + ret.list[i]+ '</option>');
+			if(ret.ret){
+				
+			}else{
+				$('#selAppointMachine').empty();
+				$('#selAppointMachine').append('<option value="auto_distribute" select="selected">' + "自动分配新实例"+ '</option>');
+				for(i=0; i < ret.list.length; i++)
+				{
+					var obj = ret.list[i];
+					$('#selAppointMachine').append('<option value='+ obj.value +'>' + obj.name + '</option>');
+				}	
 			}
+			
 		});
 	});
 });
