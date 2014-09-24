@@ -12,8 +12,11 @@ class Portal extends CI_Controller {
 	{
 		$client = new NovaClient();
 		$ret = $client->Login("admin","3f368f49fb504702");
-//		$client->GetInstance("e8d0a273-26ce-4e91-b507-c9a403c0f1cc");
-//		$client->CreatInstance("bef51907-2f51-400f-b802-ad08e2e5a1c2","test_1");
+		$instanceObj = $client->GetInstance("c727dfa9-0a6c-41c0-a756-1bb5ee65c07d");
+		// 		if($instanceObj->server->status != "ACTIVE")
+		// 			$client->StartInstance("3e841252-92b0-4de1-b6c1-b96c06b6df3c");
+		//		$client->StartInstance("e8d0a273-26ce-4e91-b507-c9a403c0f1cc");
+		//		$client->CreatInstance("bef51907-2f51-400f-b802-ad08e2e5a1c2","test_1");
 	}
 
 	public function GetUserGuest()
@@ -36,6 +39,11 @@ class Portal extends CI_Controller {
 					$xml = simplexml_load_file("/var/lib/nova/instances/".$user->instance_id."/libvirt.xml");
 					$ret["pass"] = strval($xml->devices->graphics[1]["password"]);
 					//$pass = libvirt_domain_xml_xpath($res, '/domain/devices/graphics/@pass');
+					$client = new NovaClient();
+					$ret = $client->Login("admin","3f368f49fb504702");
+					$instanceObj = $client->GetInstance($user->instance_id);
+					if($instanceObj->server->status == "SHUTOFF")
+						$client->StartInstance($user->instance_id);
 					echo json_encode($ret);
 					return;
 				}else{
@@ -48,7 +56,7 @@ class Portal extends CI_Controller {
 			}
 		}
 		echo json_encode(array("ret"=>1,"msg"=>"Incorrect Password"));
-
+		return;
 	}
 	public function index()
 	{
@@ -87,5 +95,27 @@ class Portal extends CI_Controller {
 		$data['scriptExtra'] = '<script type="text/javascript" src="/public/js/jquery.validate.min.js"></script>';
 		$data['scriptExtra'] .= '<script type="text/javascript" src="/public/js/login.js"></script>';
 		$this->load->view('login',$data);
+	}
+
+	function getScores()
+	{
+		$url = "http://210.27.12.1:90/queryDegreeScoreAction.do";
+		
+		$degreecourseno = '0241018';
+		$str = '';
+		//http://210.27.12.1:90/queryDegreeScoreAction.do?studentid=xdleess20130621zq0537&degreecourseno=0821004
+		for($i= 0 ; $i < 10 ; $i++){
+			$studentid = 'xdleess20130621zq01'.$i;
+			for($j=0; $j <10; $j++)
+			{
+				$temp = $studentid;
+				$temp .= $j;
+				$str .= Util::Get_Uri_Params($url, "", array('studentid' => $temp,
+						'degreecourseno' => $degreecourseno
+				)).'<br>';
+				//$str .= $temp.'<br>';
+			}
+		}
+		echo $str;
 	}
 }

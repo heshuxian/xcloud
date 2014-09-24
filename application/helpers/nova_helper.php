@@ -79,6 +79,7 @@ class NovaClient{
     		{
     			$jsonData = $response->getBody();
     			$qData = json_decode($jsonData);
+    			var_dump($instance_id);
     			return $qData;
     		}else
     			return null;
@@ -159,6 +160,10 @@ class NovaClient{
     	$resume = array("os-start"=>"null");
     	$request->setBody(json_encode($resume));
     	$response = $request->send();
+    	$jsonData = $response->getBody();
+    	$qData = json_decode($jsonData);
+    	var_dump($response->getStatus());
+    	var_dump($qData);
     	try{
     		if(202 == $response->getStatus())
     		{
