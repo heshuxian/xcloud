@@ -21,10 +21,6 @@ class Account extends CI_Controller {
 		$scriptExtra = '';
 		$this->mp_master->Show($content, $scriptExtra, "主页" , $data);
 	}
-	public function testgit()
-	{
-		return;
-	}
 	public function usermanage()
 	{
 		$data = array();
