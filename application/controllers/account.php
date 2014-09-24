@@ -13,7 +13,6 @@ class Account extends CI_Controller {
 		$this->user = User::GetCurrentUser();
 		$this->load->model('mp_cloud');
 	}
-
 	public function index()
 	{
 		$data = array();
@@ -21,6 +20,10 @@ class Account extends CI_Controller {
 		$content = $this->load->view('account/index', $data, TRUE);
 		$scriptExtra = '';
 		$this->mp_master->Show($content, $scriptExtra, "主页" , $data);
+	}
+	public function testgit()
+	{
+		return;
 	}
 	public function usermanage()
 	{
